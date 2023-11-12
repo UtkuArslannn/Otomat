@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Information</title>
+    <style>
+        /* Add some basic styling for better presentation */
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        form {
+            display: none;
+        }
+        #productList {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Product Information</h1>
+
+    <div id="userType">
+        <label for="userTypeSelect">Select User Type:</label>
+        <select id="userTypeSelect" onchange="toggleFormVisibility()">
+            <option value="host">Host</option>
+            <option value="user">User</option>
+        </select>
+    </div>
+
+    <div id="passwordInput" style="display: none;">
+        <label for="hostPassword">Enter Password:</label>
+        <input type="password" id="hostPassword" required>
+        <button onclick="checkPassword()">Submit</button>
+    </div>
+
+    <form id="productForm" action="#" method="post" enctype="multipart/form-data" onsubmit="addProduct(event)" style="display: none;">
+        <label for="productImage">Product Image:</label>
+        <input type="file" id="productImage" name="productImage" accept="image/jpeg" required>
+        <br>
+
+        <label for="productName">Product Name:</label>
+        <input type="text" id="productName" name="productName" required>
+        <br>
+
+        <label for="productPrice">Product Price (TRY):</label>
+        <input type="number" id="productPrice" name="productPrice" step="0.01" required>
+        <br>
+
+        <input type="submit" value="Add Product">
+    </form>
+
+    <h2>Product List</h2>
+    <ul id="productList"></ul>
+
+    <script>
+        const correctPassword = 'HasanVeyselBurak';
+
+        function toggleFormVisibility() {
+            const userTypeSelect = document.getElementById('userTypeSelect');
+            const passwordInput = document.getElementById('passwordInput');
+            const productForm = document.getElementById('productForm');
+            const isHost = userTypeSelect.value === 'host';
+
+            // Show password input and hide form if the user is a host
+            passwordInput.style.display = isHost ? 'block' : 'none';
+            productForm.style.display = 'none';
+        }
+
+        function checkPassword() {
+            const enteredPassword = document.getElementById('hostPassword').value;
+            const passwordInput = document.getElementById('passwordInput');
+            const productForm = document.getElementById('productForm');
+
+            if (enteredPassword === correctPassword) {
+                // Password is correct, show the form and hide the password input
+                passwordInput.style.display = 'none';
+                productForm.style.display = 'block';
+            } else {
+                alert('Incorrect password. Please try again.');
+            }
+        }
+
+        function addProduct(event) {
+            event.preventDefault();
+
+            // Get form values
+            const imageInput = document.getElementById('productImage');
+            const productNameInput = document.getElementById('productName');
+            const productPriceInput = document.getElementById('productPrice');
+
+            const imageFile = imageInput.files[0];
+            const productName = productNameInput.value;
+            const productPrice = parseFloat(productPriceInput.value).toFixed(2);
+
+            // Read the image as a data URL
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                const imageSrc = reader.result;
+
+                // Create a new list item
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <img src="${imageSrc}" alt="${productName}" style="max-width: 100px; max-height: 100px;">
+                    <p><strong>${productName}</strong></p>
+                    <p>Price: ₺${productPrice}</p>
+                `;
+
+                // Append the list item to the product list
+                document.getElementById('productList').appendChild(listItem);
+
+                // Save the product to local storage
+                saveProductToLocalStorage(productName, productPrice, imageSrc);
+
+                // Clear form fields
+                document.getElementById('productForm').reset();
+            };
+
+            // Read the image file as a data URL
+            if (imageFile) {
+                reader.readAsDataURL(imageFile);
+            }
+        }
+
+        function saveProductToLocalStorage(name, price, imageUrl) {
+            // Get existing products from local storage or initialize an empty array
+            const existingProducts = JSON.parse(localStorage.getItem('products')) || [];
+
+            // Add the new product to the array
+            const newProduct = { name, price, imageUrl };
+            existingProducts.push(newProduct);
+
+            // Save the updated array back to local storage
+            localStorage.setItem('products', JSON.stringify(existingProducts));
+        }
+
+        // Load existing products from local storage on page load
+        window.onload = function () {
+            const existingProducts = JSON.parse(localStorage.getItem('products')) || [];
+
+            // Display existing products in the product list
+            const productList = document.getElementById('productList');
+            existingProducts.forEach(product => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}" style="max-width: 100px; max-height: 100px;">
+                    <p><strong>${product.name}</strong></p>
+                    <p>Price: ₺${parseFloat(product.price).toFixed(2)}</p>
+                `;
+                productList.appendChild(listItem);
+            });
+        };
+    </script>
+
+</body>
+</html>
